@@ -27,6 +27,10 @@ app.get('/', (req, res) => {
   res.send('🚀 Welcome to the GoHighLevel OAuth App!');
 });
 
+app.get('/callback', (req, res) => {
+    res.redirect(`/auth/callback${req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : ''}`);
+  });
+  
 // Start server
 app.listen(PORT, () => {
   console.log(`✅ Server is running at http://localhost:${PORT}`);

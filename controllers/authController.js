@@ -16,13 +16,13 @@ exports.handleCallback = async (req, res) => {
   if (!code) return res.status(400).send('No code received in callback.');
 
   try {
-    const tokenResponse = await axios.post('https://api.gohighlevel.com/oauth/token', {
-      grant_type: 'authorization_code',
-      code,
-      client_id: process.env.GHL_CLIENT_ID,
-      client_secret: process.env.GHL_CLIENT_SECRET,
-      redirect_uri: process.env.REDIRECT_URI,
-    });
+    const tokenResponse = await axios.post('https://services.leadconnectorhq.com/oauth/token', {
+        grant_type: 'authorization_code',
+        code,
+        client_id: process.env.GHL_CLIENT_ID,
+        client_secret: process.env.GHL_CLIENT_SECRET,
+        redirect_uri: process.env.REDIRECT_URI,
+      });      
 
     const dir = path.dirname(process.env.TOKEN_FILE || './tokens/tokens.json');
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
