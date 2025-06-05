@@ -1,63 +1,55 @@
-const ghlService = require('../services/ghlService');
-const tokenStore = require('../utils/tokenStore');
+const axios = require('axios');
+const querystring = require('querystring');
 
-/**
- * Step 1: Redirect to GHL OAuth screen
- */
-exports.startOAuth = (req, res) => {
-  const redirectUri = process.env.REDIRECT_URI;
-  const clientId = process.env.CLIENT_ID;
-  const scope = process.env.SCOPES;
+const CLIENT_ID = process.env.CLIENT_ID;
+const CLIENT_SECRET = process.env.CLIENT_SECRET;
+const REDIRECT_URI = process.env.REDIRECT_URI;
+const AUTH_BASE_URL = process.env.AUTH_BASE_URL;
+const API_BASE_URL = process.env.API_BASE_URL;
 
-  const authUrl = `https://marketplace.gohighlevel.com/oauth/chooselocation?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(
-    redirectUri
-  )}&scope=${encodeURIComponent(scope)}`;
+exports.initiateOAuth = (req, res) => {
+  const scopes = [
+    'contacts.readonly',
+    'contacts.write',
+    'locations.readonly',
+  ].join(' ');
 
-  res.redirect(authUrl);
+  const url = `${AUTH_BASE_URL}/oauth/chooselocation?` + querystring.stringify({
+    response_type: 'code',
+    client_id: CLIENT_ID,
+    redirect_uri: REDIRECT_URI,
+    scope: scopes,
+  });
+
+  res.redirect(url);
 };
 
-/**
- * Step 2: Handle redirect from GHL and exchange code for token
- */
 exports.handleCallback = async (req, res) => {
-  const { code } = req.query;
+  const code = req.query.code;
 
   if (!code) {
-    return res.status(400).json({ success: false, message: 'Missing authorization code' });
+    return res.status(400).send('Missing authorization code');
   }
 
   try {
-    // Exchange code for access token
-    const tokens = await ghlService.exchangeToken(code);
+    const tokenResponse = await axios.post(`${API_BASE_URL}/oauth/token`, querystring.stringify({
+      grant_type: 'authorization_code',
+      code,
+      client_id: CLIENT_ID,
+      client_secret: CLIENT_SECRET,
+      redirect_uri: REDIRECT_URI
+    }), {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    });
 
-    // Save the base token (usually agency-level)
-    await tokenStore.saveTokens(tokens);
+    const tokens = tokenResponse.data;
 
-    // If user is an Agency (Company), get subaccounts
-    if (tokens.userType === 'Company') {
-      const installedLocations = await ghlService.getInstalledLocations(tokens.companyId);
-
-      if (!installedLocations || !installedLocations.length) {
-        return res.status(400).json({ success: false, message: 'No installed subaccounts found' });
-      }
-
-      // For demo/test: pick the first installed subaccount
-      const firstLocationId = installedLocations[0]._id;
-
-      // Get a location-scoped access token
-      const locationToken = await ghlService.getLocationAccessToken(
-        tokens.companyId,
-        firstLocationId
-      );
-
-      // Save location token separately
-      await tokenStore.saveLocationToken(firstLocationId, locationToken);
-    }
-
-    // ✅ Success – redirect to contact page or dashboard
-    res.redirect('/contacts');
+    console.log('✅ Tokens received:', tokens);
+    res.json(tokens); // For testing, respond with the tokens
   } catch (error) {
-    console.error('❌ OAuth callback error:', error.message || error);
-    res.status(500).json({ success: false, message: 'OAuth flow failed.' });
+    console.error('❌ Error exchanging token:', error.response?.data || error.message);
+    res.status(500).send('Token exchange failed');
   }
 };

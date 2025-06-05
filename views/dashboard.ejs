@@ -1,66 +1,40 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Contacts Dashboard</title>
+  <title>GHL Contacts</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      padding: 20px;
+      padding: 2rem;
+      background: #f9f9f9;
     }
-    h2 {
-      margin-top: 40px;
+    h1 {
       color: #333;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
+    ul {
+      list-style-type: none;
+      padding: 0;
     }
-    th, td {
-      padding: 10px;
-      border: 1px solid #ccc;
-      text-align: left;
-    }
-    th {
-      background-color: #f0f0f0;
+    li {
+      background: white;
+      padding: 1rem;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
   </style>
 </head>
 <body>
-  <h1>📋 Contacts by Location</h1>
-
-  <% if (contacts.length === 0) { %>
-    <p>No contacts found.</p>
-  <% } else { 
-      const grouped = {};
-      contacts.forEach(contact => {
-        const loc = contact.locationName || 'Unknown Location';
-        if (!grouped[loc]) grouped[loc] = [];
-        grouped[loc].push(contact);
-      });
-
-      Object.keys(grouped).forEach(location => { %>
-        <h2><%= location %></h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Contact Name</th>
-              <th>Email</th>
-              <th>Phone</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% grouped[location].forEach(contact => { %>
-              <tr>
-                <td><%= contact.name %></td>
-                <td><%= contact.email || '—' %></td>
-                <td><%= contact.phone || '—' %></td>
-              </tr>
-            <% }); %>
-          </tbody>
-        </table>
-  <%   });
-     } %>
+  <h1>Contacts</h1>
+  <% if (contacts && contacts.length > 0) { %>
+    <ul>
+      <% contacts.forEach(contact => { %>
+        <li><strong><%= contact.firstName %> <%= contact.lastName %></strong> - <%= contact.email %></li>
+      <% }) %>
+    </ul>
+  <% } else { %>
+    <p>No contacts found or you haven't authenticated yet.</p>
+  <% } %>
 </body>
 </html>
