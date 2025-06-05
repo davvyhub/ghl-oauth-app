@@ -1,32 +1,36 @@
 const axios = require('axios');
-const qs = require('qs'); // ✅ Required for form encoding
-const fs = require('fs');
-const path = require('path');
+const tokenStore = require('../utils/tokenStore');
+require('dotenv').config();
 
-const TOKEN_FILE = process.env.TOKEN_FILE || './tokens/tokens.json';
+const {
+  GHL_CLIENT_ID,
+  GHL_CLIENT_SECRET,
+  REDIRECT_URI,
+  GHL_SCOPES,
+} = process.env;
 
-exports.redirectToAuth = (req, res) => {
-    const authUrl = `https://app.gohighlevel.com/oauth/authorize?response_type=code&client_id=${process.env.GHL_CLIENT_ID}&redirect_uri=${encodeURIComponent(process.env.REDIRECT_URI)}&scope=contacts.read contacts.write`;
-    res.redirect(authUrl);
-  };
-  
+exports.startAuth = (req, res) => {
+  const authUrl = `https://marketplace.gohighlevel.com/oauth/chooselocation?response_type=code&client_id=${GHL_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(GHL_SCOPES)}`;
+  res.redirect(authUrl);
+};
+
 exports.handleCallback = async (req, res) => {
   const code = req.query.code;
 
-  if (!code) return res.status(400).send('No code received in callback.');
+  if (!code) {
+    return res.status(400).send('❌ No authorization code provided');
+  }
 
   try {
-    const formData = qs.stringify({
-      grant_type: 'authorization_code',
-      code,
-      client_id: process.env.GHL_CLIENT_ID,
-      client_secret: process.env.GHL_CLIENT_SECRET,
-      redirect_uri: process.env.REDIRECT_URI,
-    });
-
-    const tokenResponse = await axios.post(
+    const tokenRes = await axios.post(
       'https://services.leadconnectorhq.com/oauth/token',
-      formData,
+      new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        client_id: GHL_CLIENT_ID,
+        client_secret: GHL_CLIENT_SECRET,
+        redirect_uri: REDIRECT_URI,
+      }),
       {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -34,10 +38,7 @@ exports.handleCallback = async (req, res) => {
       }
     );
 
-    const dir = path.dirname(TOKEN_FILE);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-
-    fs.writeFileSync(TOKEN_FILE, JSON.stringify(tokenResponse.data, null, 2));
+    await tokenStore.saveTokens(tokenRes.data);
     res.send('✅ Tokens received and saved!');
   } catch (err) {
     console.error('❌ Token exchange failed:', err.response?.data || err.message);

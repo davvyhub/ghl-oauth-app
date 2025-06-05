@@ -1,15 +1,16 @@
 const fs = require('fs');
 const path = require('path');
+const tokenPath = path.join(__dirname, '../tokens/tokens.json');
 
-const TOKEN_FILE = process.env.TOKEN_FILE || './tokens/tokens.json';
-
-exports.saveTokens = async (tokens) => {
-  const dir = path.dirname(TOKEN_FILE);
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(TOKEN_FILE, JSON.stringify(tokens, null, 2));
+exports.saveTokens = (tokens) => {
+  fs.writeFileSync(tokenPath, JSON.stringify(tokens, null, 2));
 };
 
-exports.loadTokens = async () => {
-  if (!fs.existsSync(TOKEN_FILE)) throw new Error('No token file found.');
-  return JSON.parse(fs.readFileSync(TOKEN_FILE));
+exports.loadTokens = () => {
+  if (!fs.existsSync(tokenPath)) {
+    console.error('❌ No token file found.');
+    return null;
+  }
+  const raw = fs.readFileSync(tokenPath);
+  return JSON.parse(raw);
 };

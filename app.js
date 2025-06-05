@@ -19,7 +19,7 @@ app.use(express.urlencoded({ extended: true }));
 const authRoutes = require('./routes/authRoutes');
 const contactRoutes = require('./routes/contactRoutes');
 
-app.use('/auth', authRoutes);
+app.use('/', authRoutes);
 app.use('/contacts', contactRoutes);
 
 // Root route

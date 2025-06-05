@@ -1,42 +1,57 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>GHL Contacts</title>
+  <title>GHL Contacts Dashboard</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    h1 { color: #333; }
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-    th { background-color: #f8f8f8; }
-    tr:nth-child(even) { background-color: #f4f4f4; }
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 10px;
+      border: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #f4f4f4;
+    }
+
+    h1 {
+      color: #333;
+    }
   </style>
 </head>
 <body>
-  <h1>GoHighLevel Contacts</h1>
+  <h1>📇 Contacts from GoHighLevel</h1>
 
-  <% if (contacts && contacts.length) { %>
+  <% if (contacts && contacts.length > 0) { %>
     <table>
       <thead>
         <tr>
-          <th>Name</th>
+          <th>Full Name</th>
           <th>Email</th>
           <th>Phone</th>
-          <th>Created At</th>
         </tr>
       </thead>
       <tbody>
         <% contacts.forEach(contact => { %>
           <tr>
             <td><%= contact.firstName %> <%= contact.lastName %></td>
-            <td><%= contact.email || '—' %></td>
-            <td><%= contact.phone || '—' %></td>
-            <td><%= contact.createdAt || '—' %></td>
+            <td><%= contact.email || 'N/A' %></td>
+            <td><%= contact.phone || 'N/A' %></td>
           </tr>
         <% }) %>
       </tbody>
     </table>
   <% } else { %>
-    <p>No contacts found.</p>
+    <p>No contacts available.</p>
   <% } %>
 </body>
 </html>
