@@ -28,7 +28,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/callback', (req, res) => {
-    res.redirect(`/auth/callback${req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : ''}`);
+    res.redirect(`/callback${req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : ''}`);
   });
   
 // Start server
