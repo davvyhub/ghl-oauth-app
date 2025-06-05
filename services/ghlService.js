@@ -3,7 +3,7 @@ const tokenStore = require('../utils/tokenStore');
 
 const API_BASE_URL = process.env.API_BASE_URL;
 
-// Fetch user profile (optional, to test token)
+// Fetch user profile (optional, for testing token)
 async function getUserInfo(accessToken) {
   const res = await axios.get(`${API_BASE_URL}/users`, {
     headers: {
@@ -28,7 +28,24 @@ async function fetchContacts(accessToken) {
   }
 }
 
+// Get installed locations for a company
+async function getInstalledLocations(companyId) {
+  const tokens = await tokenStore.loadTokens(); // fixed from getTokens to loadTokens
+
+  const url = `${API_BASE_URL}/oauth/installedLocations?companyId=${companyId}&appId=${process.env.GHL_APP_ID}`;
+
+  const response = await axios.get(url, {
+    headers: {
+      Authorization: `Bearer ${tokens.access_token}`,
+      Version: '2021-07-28'
+    }
+  });
+
+  return response.data.locations;
+}
+
 module.exports = {
   getUserInfo,
   fetchContacts,
+  getInstalledLocations,
 };
