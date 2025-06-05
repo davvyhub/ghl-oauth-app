@@ -24,13 +24,11 @@ exports.handleCallback = async (req, res) => {
       redirect_uri: process.env.REDIRECT_URI,
     });
 
-    // Ensure tokens folder exists
-    const dir = path.dirname(TOKEN_FILE);
+    const dir = path.dirname(process.env.TOKEN_FILE || './tokens/tokens.json');
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
-    // Save tokens to file
-    fs.writeFileSync(TOKEN_FILE, JSON.stringify(tokenResponse.data, null, 2));
-    res.send('✅ Access token saved successfully.');
+    fs.writeFileSync(process.env.TOKEN_FILE || './tokens/tokens.json', JSON.stringify(tokenResponse.data, null, 2));
+    res.send('✅ Tokens received and saved!');
   } catch (err) {
     console.error('❌ Token exchange failed:', err.response?.data || err.message);
     res.status(500).send('❌ Failed to exchange token.');
