@@ -1,40 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>GHL Contacts</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 2rem;
-      background: #f9f9f9;
-    }
-    h1 {
-      color: #333;
-    }
-    ul {
-      list-style-type: none;
-      padding: 0;
-    }
-    li {
-      background: white;
-      padding: 1rem;
-      margin-bottom: 10px;
-      border-radius: 5px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-  </style>
+  <title>Contacts</title>
 </head>
 <body>
-  <h1>Contacts</h1>
-  <% if (contacts && contacts.length > 0) { %>
+  <h1>Fetched Contacts</h1>
+  <% if (contacts.length === 0) { %>
+    <p>No contacts found.</p>
+  <% } else { %>
     <ul>
       <% contacts.forEach(contact => { %>
-        <li><strong><%= contact.firstName %> <%= contact.lastName %></strong> - <%= contact.email %></li>
-      <% }) %>
+        <li><%= contact.firstName || '' %> <%= contact.lastName || '' %> - <%= contact.email || 'No email' %></li>
+      <% }); %>
     </ul>
-  <% } else { %>
-    <p>No contacts found or you haven't authenticated yet.</p>
   <% } %>
 </body>
 </html>

@@ -9,7 +9,10 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 const authRoutes = require('./routes/authRoutes');
+const contactRoutes = require('./routes/contactRoutes');
+
 app.use('/', authRoutes);
+app.use('/', contactRoutes);
 
 // Optional static folder for views or frontend
 app.set('view engine', 'ejs');

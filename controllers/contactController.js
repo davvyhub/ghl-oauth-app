@@ -1,23 +1,21 @@
+// controllers/contactController.js
 const ghlService = require('../services/ghlService');
 const tokenStore = require('../utils/tokenStore');
 
-exports.getContacts = async (req, res) => {
+exports.showContacts = async (req, res) => {
   try {
-    // Retrieve stored tokens
-    const allTokens = await tokenStore.getAllLocationTokens();
+    const locationTokens = await tokenStore.getAllLocationTokens();
 
     let allContacts = [];
 
-    for (const locationId in allTokens) {
-      const token = allTokens[locationId];
-
-      const contacts = await ghlService.fetchContacts(token.access_token);
-      allContacts = allContacts.concat(contacts);
+    for (const [locationId, accessToken] of Object.entries(locationTokens)) {
+      const contacts = await ghlService.fetchContacts(accessToken, locationId);
+      allContacts.push(...contacts);
     }
 
     res.render('dashboard', { contacts: allContacts });
   } catch (error) {
-    console.error('❌ Failed to fetch contacts:', error.message || error);
-    res.render('dashboard', { contacts: [] });
+    console.error('❌ Failed to load contacts:', error.message || error);
+    res.status(500).json({ success: false, message: 'Failed to fetch contacts.' });
   }
 };
