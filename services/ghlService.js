@@ -36,24 +36,27 @@ exports.exchangeToken = async (code) => {
 };
 
 exports.getInstalledLocations = async (companyId) => {
-  try {
-    const response = await axios.get(`${BASE_URL}/oauth/installedLocations`, {
-      headers: {
-        Version: '2021-07-28'
-      },
-      params: {
-        companyId,
-        appId: GHL_APP_ID,
-        isInstalled: true
-      }
-    });
-
-    return response.data.locations || [];
-  } catch (err) {
-    logger.error('❌ Failed to fetch installed locations:', err.response?.data || err.message);
-    return [];
-  }
-};
+    try {
+      const response = await axios.get(
+        'https://services.leadconnectorhq.com/oauth/installedLocations',
+        {
+          headers: {
+            Accept: 'application/json',
+            Version: '2021-07-28',
+          },
+          params: {
+            companyId: companyId,
+            appId: process.env.APP_ID, // ✅ must be set in your .env
+          },
+        }
+      );
+  
+      return response.data.locations;
+    } catch (error) {
+      console.error('❌ Failed to fetch installed locations:', error.response?.data || error.message);
+      return [];
+    }
+  };  
 
 exports.getLocationAccessToken = async (companyId, locationId) => {
   try {
