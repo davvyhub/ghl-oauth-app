@@ -1,57 +1,66 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>GHL Contacts Dashboard</title>
+  <meta charset="UTF-8">
+  <title>Contacts Dashboard</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       padding: 20px;
     }
-
-    table {
-      border-collapse: collapse;
-      width: 100%;
-    }
-
-    th, td {
-      text-align: left;
-      padding: 10px;
-      border: 1px solid #ddd;
-    }
-
-    th {
-      background-color: #f4f4f4;
-    }
-
-    h1 {
+    h2 {
+      margin-top: 40px;
       color: #333;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+    th {
+      background-color: #f0f0f0;
     }
   </style>
 </head>
 <body>
-  <h1>📇 Contacts from GoHighLevel</h1>
+  <h1>📋 Contacts by Location</h1>
 
-  <% if (contacts && contacts.length > 0) { %>
-    <table>
-      <thead>
-        <tr>
-          <th>Full Name</th>
-          <th>Email</th>
-          <th>Phone</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% contacts.forEach(contact => { %>
-          <tr>
-            <td><%= contact.firstName %> <%= contact.lastName %></td>
-            <td><%= contact.email || 'N/A' %></td>
-            <td><%= contact.phone || 'N/A' %></td>
-          </tr>
-        <% }) %>
-      </tbody>
-    </table>
-  <% } else { %>
-    <p>No contacts available.</p>
-  <% } %>
+  <% if (contacts.length === 0) { %>
+    <p>No contacts found.</p>
+  <% } else { 
+      const grouped = {};
+      contacts.forEach(contact => {
+        const loc = contact.locationName || 'Unknown Location';
+        if (!grouped[loc]) grouped[loc] = [];
+        grouped[loc].push(contact);
+      });
+
+      Object.keys(grouped).forEach(location => { %>
+        <h2><%= location %></h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Contact Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% grouped[location].forEach(contact => { %>
+              <tr>
+                <td><%= contact.name %></td>
+                <td><%= contact.email || '—' %></td>
+                <td><%= contact.phone || '—' %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+  <%   });
+     } %>
 </body>
 </html>

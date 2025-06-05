@@ -1,47 +1,41 @@
-const axios = require('axios');
+const ghlService = require('../services/ghlService');
 const tokenStore = require('../utils/tokenStore');
-require('dotenv').config();
-
-const {
-  GHL_CLIENT_ID,
-  GHL_CLIENT_SECRET,
-  REDIRECT_URI,
-  GHL_SCOPES,
-} = process.env;
-
-exports.startAuth = (req, res) => {
-  const authUrl = `https://marketplace.gohighlevel.com/oauth/chooselocation?response_type=code&client_id=${GHL_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(GHL_SCOPES)}`;
-  res.redirect(authUrl);
-};
 
 exports.handleCallback = async (req, res) => {
-  const code = req.query.code;
+  const { code } = req.query;
 
   if (!code) {
-    return res.status(400).send('❌ No authorization code provided');
+    return res.status(400).json({ success: false, message: 'Missing authorization code' });
   }
 
   try {
-    const tokenRes = await axios.post(
-      'https://services.leadconnectorhq.com/oauth/token',
-      new URLSearchParams({
-        grant_type: 'authorization_code',
-        code,
-        client_id: GHL_CLIENT_ID,
-        client_secret: GHL_CLIENT_SECRET,
-        redirect_uri: REDIRECT_URI,
-      }),
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      }
-    );
+    const tokens = await ghlService.exchangeToken(code);
 
-    await tokenStore.saveTokens(tokenRes.data);
-    res.send('✅ Tokens received and saved!');
-  } catch (err) {
-    console.error('❌ Token exchange failed:', err.response?.data || err.message);
-    res.status(500).send('❌ Failed to exchange token.');
+    // Save initial tokens
+    await tokenStore.saveTokens(tokens);
+
+    // Handle agency (Company) type
+    if (tokens.userType === 'Company') {
+      const installedLocations = await ghlService.getInstalledLocations(tokens.companyId);
+
+      if (!installedLocations || !installedLocations.length) {
+        return res.status(400).json({ success: false, message: 'No installed subaccounts found' });
+      }
+
+      // For demo, just pick the first installed location
+      const firstLocationId = installedLocations[0]._id;
+
+      const locationToken = await ghlService.getLocationAccessToken(
+        tokens.companyId,
+        firstLocationId
+      );
+
+      await tokenStore.saveLocationToken(firstLocationId, locationToken);
+    }
+
+    res.redirect('/contacts'); // After successful auth
+  } catch (error) {
+    console.error('❌ OAuth callback error:', error.message || error);
+    res.status(500).json({ success: false, message: 'OAuth flow failed.' });
   }
 };
