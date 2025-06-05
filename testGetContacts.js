@@ -7,7 +7,7 @@ const accessToken = tokens.access_token;
 
 async function getContacts() {
   try {
-    const response = await axios.get('https://rest.gohighlevel.com/v1/contacts/', {
+    const response = await axios.get('https://services.leadconnectorhq.com/v1/contacts/', {
       headers: {
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
