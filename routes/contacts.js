@@ -1,5 +1,3 @@
-// routes/contacts.js
-
 const express = require('express');
 const router = express.Router();
 const querystring = require('querystring');
@@ -11,38 +9,23 @@ const tokenService = require('../services/tokenService');
 const contactService = require('../services/contactService');
 const fileStorage = require('../utils/fileStorage');
 
-// Load scopes (for reference) from config; actual values come from process.env
-const config = require('../config/ghlConfig.json');
-
-/**
- * 1) GET /contacts/auth
- *    Redirects the agency admin to HighLevel’s OAuth consent page.
- */
+// 1) Redirect user to HighLevel's OAuth consent page
 router.get('/auth', (req, res) => {
   const params = {
     response_type: 'code',
     client_id: process.env.GHL_CLIENT_ID,
     redirect_uri: process.env.GHL_REDIRECT_URI,
-    scope: config.scopes,
+    scope: process.env.GHL_SCOPES || 'contacts.readonly',
   };
+
   const authUrl =
     'https://marketplace.gohighlevel.com/oauth/chooselocation?' +
     querystring.stringify(params);
+
   res.redirect(authUrl);
 });
 
-/**
- * 2) GET /contacts/callback
- *    Handles the OAuth callback:
- *      a) Exchanges code for agency access token
- *      b) Fetches all installed location IDs under this agency
- *      c) For each location:
- *           i) Converts agency token → location token
- *          ii) Fetches all contacts for that location
- *         iii) Aggregates contacts
- *      d) Writes the aggregated array to data/contacts.json
- *      e) Responds with a simple success JSON
- */
+// 2) Handle OAuth callback and fetch all contacts
 router.get('/callback', async (req, res) => {
   try {
     const { code } = req.query;
@@ -50,55 +33,52 @@ router.get('/callback', async (req, res) => {
       return res.status(400).json({ error: 'Missing authorization code.' });
     }
 
-    // 2.a Exchange code for agency token
-    const { access_token: agencyToken } = await authService.exchangeCodeForToken(
-      code
-    );
+    // a) Exchange code for agency access token
+    const { access_token: agencyToken } = await authService.exchangeCodeForToken(code);
 
-    // 2.b Fetch all installed sub-account (location) IDs
+    // b) Fetch all installed sub-accounts (locations) for the agency
     const installedLocations = await agencyService.getInstalledLocations({
       agencyToken,
       companyId: process.env.GHL_COMPANY_ID,
     });
-    // installedLocations is an array of strings: [ 'locId1', 'locId2', ... ]
 
     const allContacts = [];
 
-    // 2.c Loop through each locationId
-    for (let locationId of installedLocations) {
-      // 2.c.i Exchange agencyToken → locationToken
-      const locationToken = await tokenService.getLocationToken({
+    // c) For each location, fetch contacts
+    for (let location of installedLocations) {
+      const locationId = location.id;
+      const businessId = location.businessId;
+
+      // i) Convert agency token to location-level token
+      const { access_token: locationToken } = await tokenService.getLocationToken({
         agencyToken,
         companyId: process.env.GHL_COMPANY_ID,
         locationId,
       });
 
-      // 2.c.ii Fetch all contacts for this sub-account
-      const contacts = await contactService.fetchContactsByBusinessId({
+      // ii) Fetch contacts from that location
+      const contacts = await contactService.getContactsByBusinessId({
         locationToken,
-        businessId: locationId,
-        limit: 100,
-        skip: 0,
+        locationId,
+        businessId,
       });
 
-      // 2.c.iii Append to the master list
+      // iii) Aggregate them
       allContacts.push(...contacts);
     }
 
-    // 2.d Write allContacts to data/contacts.json
+    // d) Save all contacts to JSON file
     const outputPath = path.join(__dirname, '..', 'data', 'contacts.json');
     await fileStorage.writeJson(outputPath, allContacts);
 
-    // 2.e Respond with success
+    // e) Done!
     return res.json({
       success: true,
       totalFetched: allContacts.length,
     });
   } catch (err) {
-    console.error('Error in /contacts/callback:', err);
-    return res
-      .status(500)
-      .json({ error: 'An error occurred while fetching contacts.' });
+    console.error('Error in /contacts/callback:', err?.response?.data || err.message);
+    return res.status(500).json({ error: 'An error occurred while fetching contacts.' });
   }
 });
 
