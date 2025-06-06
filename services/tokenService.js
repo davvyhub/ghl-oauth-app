@@ -6,20 +6,11 @@ const qs = require('qs');
 const LOCATION_TOKEN_URL = 'https://services.leadconnectorhq.com/oauth/locationToken';
 
 module.exports = {
-  /**
-   * Exchange an agency-level access token for a location-level access token.
-   *
-   * @param {Object} params
-   * @param {string} params.agencyToken  – the agency-level access_token
-   * @param {string} params.companyId    – the agency’s company ID
-   * @param {string} params.locationId   – the sub-account (location) ID
-   * @returns {Promise<string>} the location access_token
-   */
   async getLocationToken({ agencyToken, companyId, locationId }) {
     const payload = qs.stringify({
-      companyId: companyId,
-      locationId: locationId,
-      appId: process.env.GHL_CLIENT_ID, // ✅ Add this field
+      companyId: String(companyId),
+      locationId: String(locationId),
+      appId: String(process.env.GHL_CLIENT_ID),  // ✅ Force convert to string
     });
 
     const response = await axios.post(LOCATION_TOKEN_URL, payload, {
@@ -31,6 +22,9 @@ module.exports = {
       },
     });
 
-    return response.data.access_token;
+    return {
+      access_token: response.data.access_token,
+      expires_in: response.data.expires_in,
+    };
   },
 };
