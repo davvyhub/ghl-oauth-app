@@ -11,7 +11,7 @@ module.exports = {
    *
    * @param {Object} params
    * @param {string} params.agencyToken  – the agency-level access_token
-   * @param {string} params.companyId    – the agency’s company ID (process.env.GHL_COMPANY_ID)
+   * @param {string} params.companyId    – the agency’s company ID
    * @param {string} params.locationId   – the sub-account (location) ID
    * @returns {Promise<string>} the location access_token
    */
@@ -19,6 +19,7 @@ module.exports = {
     const payload = qs.stringify({
       companyId: companyId,
       locationId: locationId,
+      appId: process.env.GHL_CLIENT_ID, // ✅ Add this field
     });
 
     const response = await axios.post(LOCATION_TOKEN_URL, payload, {
@@ -30,7 +31,6 @@ module.exports = {
       },
     });
 
-    // The response payload contains: access_token, token_type, expires_in, etc.
     return response.data.access_token;
   },
 };
